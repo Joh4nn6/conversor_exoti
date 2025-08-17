@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conversor Galáctico Pro</title>
+  <link rel="preload" as="image" href="galaxy-background.webp">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <h1>🚀 Conversor <span class="gradient">Galáctico</span> Pro</h1>
+      <p class="sub">Convierte <strong>Markdown</strong> y <strong>HTML</strong> a múltiples formatos — offline y con estilo.</p>
+    </header>
+
+    <section class="panel glass">
+      <label class="field">
+        <span>Tu contenido (MD / HTML)</span>
+        <textarea id="input" placeholder="# Hola universo 🌌
+**Negrita**, _cursiva_, `código`…"></textarea>
+      </label>
+
+      <div class="actions">
+        <button class="btn btn-primary" data-action="md">Convertir Markdown</button>
+        <button class="btn btn-secondary" data-action="html">Convertir HTML</button>
+        <button class="btn btn-ghost" id="clear">Limpiar</button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Hecho con ✨ por Joh4nn6</span>
+    </footer>
+  </main>
+
+  <script>
+    // Animación de “ripple” en clic
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const r = document.createElement('span');
+        r.className = 'ripple';
+        const rect = btn.getBoundingClientRect();
+        r.style.left = (e.clientX - rect.left) + 'px';
+        r.style.top  = (e.clientY - rect.top)  + 'px';
+        btn.appendChild(r);
+        setTimeout(() => r.remove(), 600);
+      });
+    });
+
+    // Demo: “Limpiar”
+    document.getElementById('clear').onclick = () => (document.getElementById('input').value = '');
+  </script>
+</body>
+</html>
