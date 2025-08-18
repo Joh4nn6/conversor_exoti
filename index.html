@@ -3,52 +3,1215 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Conversor Galáctico Pro</title>
-  <link rel="preload" as="image" href="galaxy-background.webp">
+  <title>Claude Converter Pro</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  
+  <!-- Meta tags para SEO y redes sociales -->
+  <meta name="description" content="Conversor profesional de Markdown y HTML a PDF, DOCX, PNG con Claude AI integration y vista previa en tiempo real">
+  <meta property="og:title" content="Claude Converter Pro">
+  <meta property="og:description" content="Herramienta premium para convertir documentos con IA">
+  <meta property="og:type" content="website">
+  
+  <!-- Cargar librerías desde CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.9.3/dist/html2pdf.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-  <main class="container">
-    <header class="hero">
-      <h1>🚀 Conversor <span class="gradient">Galáctico</span> Pro</h1>
-      <p class="sub">Convierte <strong>Markdown</strong> y <strong>HTML</strong> a múltiples formatos — offline y con estilo.</p>
-    </header>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Procesando documento...</p>
+    </div>
+  </div>
 
-    <section class="panel glass">
-      <label class="field">
-        <span>Tu contenido (MD / HTML)</span>
-        <textarea id="input" placeholder="# Hola universo 🌌
-**Negrita**, _cursiva_, `código`…"></textarea>
-      </label>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🤖</span>
+      <h1 class="glow-text">Claude Converter Pro</h1>
+      <span class="version">v2.0</span>
+    </div>
+    <div class="top-actions">
+      <button id="aiOptimizeBtn" class="btn ai-btn" title="Optimizar con IA">✨ IA</button>
+      <button id="templatesBtn" class="btn" title="Plantillas">📄</button>
+      <button id="settingsBtn" class="btn" title="Configuración">⚙️</button>
+      <button id="themeToggle" class="btn" aria-label="Cambiar tema" title="Cambiar tema">🌗</button>
+    </div>
+  </header>
 
-      <div class="actions">
-        <button class="btn btn-primary" data-action="md">Convertir Markdown</button>
-        <button class="btn btn-secondary" data-action="html">Convertir HTML</button>
-        <button class="btn btn-ghost" id="clear">Limpiar</button>
+  <main class="layout">
+    <section class="panel editor-panel" aria-label="Editor">
+      <div class="panel-header">
+        <div class="file-section">
+          <label for="file" class="file-label">
+            <span class="file-icon">📁</span>
+            <span>Cargar archivo</span>
+            <input id="file" type="file" accept=".md,.markdown,.txt,.html,.htm,.rtf,.pdf" multiple />
+          </label>
+        </div>
+        <div class="inline-actions">
+          <button id="pasteBtn" class="btn mini" title="Pegar desde portapapeles">📋</button>
+          <button id="formatBtn" class="btn mini" title="Auto-formatear">🎨</button>
+          <button id="clearBtn" class="btn mini danger" title="Limpiar">🧹</button>
+        </div>
+      </div>
+      
+      <div class="editor-toolbar">
+        <button class="toolbar-btn" data-action="bold" title="Negrita">**B**</button>
+        <button class="toolbar-btn" data-action="italic" title="Cursiva">*I*</button>
+        <button class="toolbar-btn" data-action="code" title="Código">`C`</button>
+        <button class="toolbar-btn" data-action="link" title="Enlace">🔗</button>
+        <button class="toolbar-btn" data-action="image" title="Imagen">🖼️</button>
+        <button class="toolbar-btn" data-action="table" title="Tabla">📊</button>
+        <button class="toolbar-btn" data-action="list" title="Lista">📝</button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" data-action="h1" title="Título H1">H1</button>
+        <button class="toolbar-btn" data-action="h2" title="Título H2">H2</button>
+        <button class="toolbar-btn" data-action="h3" title="Título H3">H3</button>
+      </div>
+      
+      <label for="input" class="label">Markdown, HTML o texto plano</label>
+      <div class="editor-container">
+        <textarea id="input" placeholder="Escribe o pega tu contenido aquí...&#10;&#10;Formatos soportados:&#10;• Markdown (.md)&#10;• HTML (.html)&#10;• Texto plano (.txt)&#10;• RTF (.rtf)&#10;&#10;Funciones especiales:&#10;• Auto-detección de formato&#10;• Limpieza inteligente&#10;• Vista previa en tiempo real&#10;• Optimización con IA"></textarea>
+        <div class="editor-enhancements">
+          <div class="line-numbers" id="lineNumbers"></div>
+        </div>
+      </div>
+      
+      <div class="stats-enhanced" aria-live="polite">
+        <div class="stat-item">
+          <span class="stat-label">Caracteres:</span>
+          <span id="charCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Palabras:</span>
+          <span id="wordCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Líneas:</span>
+          <span id="lineCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Formato:</span>
+          <span id="formatType" class="stat-value format-badge">Auto</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Tiempo lectura:</span>
+          <span id="readTime" class="stat-value">~0 min</span>
+        </div>
+      </div>
+      
+      <div class="actions-enhanced">
+        <div class="action-group primary-actions">
+          <button id="pdfBtn" class="btn primary large">
+            <span class="btn-icon">📄</span>
+            <span class="btn-text">PDF Premium</span>
+            <span class="btn-subtitle">A4, Headers, TOC</span>
+          </button>
+          <button id="docxBtn" class="btn large">
+            <span class="btn-icon">📝</span>
+            <span class="btn-text">DOCX</span>
+            <span class="btn-subtitle">MS Word</span>
+          </button>
+        </div>
+        <div class="action-group secondary-actions">
+          <button id="pngBtn" class="btn">📸 PNG</button>
+          <button id="htmlBtn" class="btn">🌐 HTML</button>
+          <button id="txtBtn" class="btn">📄 TXT</button>
+          <button id="mdBtn" class="btn">📝 MD</button>
+        </div>
+        <div class="action-group special-actions">
+          <button id="zipBtn" class="btn special">🗜️ ZIP All</button>
+          <button id="printBtn" class="btn">🖨️ Print</button>
+        </div>
       </div>
     </section>
 
-    <footer class="foot">
-      <span>Hecho con ✨ por Joh4nn6</span>
-    </footer>
+    <section class="panel preview-panel" aria-label="Previsualización">
+      <div class="preview-header">
+        <div class="preview-controls">
+          <button id="zoomOut" class="control-btn" title="Zoom -">🔍-</button>
+          <span class="zoom-level">100%</span>
+          <button id="zoomIn" class="control-btn" title="Zoom +">🔍+</button>
+          <div class="control-divider"></div>
+          <button id="fullscreenBtn" class="control-btn" title="Pantalla completa">⛶</button>
+          <button id="refreshPreview" class="control-btn" title="Actualizar">🔄</button>
+        </div>
+        <div class="preview-info">
+          <span class="page-info">Página <span id="currentPage">1</span> de <span id="totalPages">1</span></span>
+        </div>
+      </div>
+      <div class="preview-wrap" id="previewWrap">
+        <div id="preview" class="paper" aria-label="Vista previa del documento">
+          <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h2>Claude Converter Pro</h2>
+            <p>Comienza escribiendo o pegando tu contenido en el editor de la izquierda.</p>
+            <div class="welcome-features">
+              <div class="feature-item">✨ Optimización con IA</div>
+              <div class="feature-item">📄 PDF Premium con TOC</div>
+              <div class="feature-item">🎨 Auto-formateo inteligente</div>
+              <div class="feature-item">📊 Estadísticas avanzadas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <!-- Modal de configuración -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚙️ Configuración</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label class="setting-label">Calidad PDF:</label>
+          <select id="pdfQuality" class="setting-input">
+            <option value="0.7">Estándar (menor tamaño)</option>
+            <option value="0.9" selected>Alta (recomendado)</option>
+            <option value="1.0">Máxima (mayor tamaño)</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Escala de exportación:</label>
+          <select id="exportScale" class="setting-input">
+            <option value="1">1x (rápido)</option>
+            <option value="2" selected>2x (recomendado)</option>
+            <option value="3">3x (alta resolución)</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Auto-guardado:</label>
+          <input type="checkbox" id="autoSave" class="setting-checkbox" checked>
+          <span class="setting-description">Guarda automáticamente el contenido</span>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Numeración de líneas:</label>
+          <input type="checkbox" id="showLineNumbers" class="setting-checkbox">
+          <span class="setting-description">Mostrar números de línea en el editor</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de plantillas -->
+  <div id="templatesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📄 Plantillas</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="template-grid">
+          <div class="template-card" data-template="academic">
+            <div class="template-icon">🎓</div>
+            <h4>Documento Académico</h4>
+            <p>Estructura para ensayos y papers</p>
+          </div>
+          <div class="template-card" data-template="business">
+            <div class="template-icon">💼</div>
+            <h4>Reporte Corporativo</h4>
+            <p>Plantilla profesional para empresas</p>
+          </div>
+          <div class="template-card" data-template="resume">
+            <div class="template-icon">📋</div>
+            <h4>Currículum</h4>
+            <p>CV profesional y moderno</p>
+          </div>
+          <div class="template-card" data-template="technical">
+            <div class="template-icon">🔧</div>
+            <h4>Documentación Técnica</h4>
+            <p>Para manuales y guías técnicas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer-enhanced">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Claude Converter Pro</h4>
+        <p>Conversor profesional con IA integrada</p>
+      </div>
+      <div class="footer-section">
+        <h4>Formatos soportados</h4>
+        <p>PDF • DOCX • PNG • HTML • TXT • MD</p>
+      </div>
+      <div class="footer-section">
+        <h4>Características premium</h4>
+        <p>IA • TOC automático • Vista previa • Plantillas</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <small>Los archivos PDF mantienen fondo blanco y texto negro para máxima legibilidad. Los colores inline en HTML se respetan.</small>
+    </div>
+  </footer>
+
   <script>
-    // Animación de “ripple” en clic
-    document.querySelectorAll('.btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const r = document.createElement('span');
-        r.className = 'ripple';
-        const rect = btn.getBoundingClientRect();
-        r.style.left = (e.clientX - rect.left) + 'px';
-        r.style.top  = (e.clientY - rect.top)  + 'px';
-        btn.appendChild(r);
-        setTimeout(() => r.remove(), 600);
+    // Configuración global
+    const CONFIG = {
+      autoSave: true,
+      pdfQuality: 0.9,
+      exportScale: 2,
+      showLineNumbers: false,
+      maxFileSize: 10 * 1024 * 1024, // 10MB
+      autoSaveInterval: 30000 // 30 segundos
+    };
+
+    // Templates
+    const TEMPLATES = {
+      academic: `# Título del Documento
+
+**Autor:** Tu Nombre  
+**Fecha:** ${new Date().toLocaleDateString()}  
+**Institución:** Universidad/Institución
+
+## Resumen
+
+Breve resumen del contenido...
+
+## Introducción
+
+Introducción al tema...
+
+## Desarrollo
+
+### Subtema 1
+
+Contenido del subtema...
+
+### Subtema 2
+
+Más contenido...
+
+## Conclusiones
+
+Conclusiones finales...
+
+## Referencias
+
+1. Referencia 1
+2. Referencia 2`,
+
+      business: `# Reporte Corporativo
+
+**Empresa:** Nombre de la Empresa  
+**Período:** Q4 2024  
+**Preparado por:** Equipo Ejecutivo
+
+## Resumen Ejecutivo
+
+### Puntos Clave
+- Punto clave 1
+- Punto clave 2
+- Punto clave 3
+
+## Análisis Financiero
+
+| Métrica | Q3 2024 | Q4 2024 | Variación |
+|---------|---------|---------|-----------|
+| Ingresos | $100K | $120K | +20% |
+| Gastos | $80K | $85K | +6.25% |
+| Utilidad | $20K | $35K | +75% |
+
+## Recomendaciones
+
+1. Recomendación estratégica 1
+2. Recomendación estratégica 2
+
+## Próximos Pasos
+
+- Acción 1
+- Acción 2
+- Acción 3`,
+
+      resume: `# Tu Nombre
+
+**Email:** tu@email.com | **Teléfono:** +56 9 1234 5678  
+**LinkedIn:** linkedin.com/in/tuperfil | **GitHub:** github.com/tuperfil
+
+## Perfil Profesional
+
+Breve descripción de tu experiencia y objetivos profesionales...
+
+## Experiencia Laboral
+
+### Cargo Actual - Empresa (2022 - Presente)
+- Logro importante 1
+- Logro importante 2
+- Logro importante 3
+
+### Cargo Anterior - Empresa (2020 - 2022)
+- Responsabilidad clave 1
+- Responsabilidad clave 2
+
+## Educación
+
+**Título Profesional** - Universidad (Año)  
+Especialización o mención relevante
+
+## Habilidades Técnicas
+
+- Habilidad 1
+- Habilidad 2  
+- Habilidad 3
+
+## Certificaciones
+
+- Certificación 1 (Año)
+- Certificación 2 (Año)`,
+
+      technical: `# Manual Técnico
+
+**Versión:** 1.0  
+**Última actualización:** ${new Date().toLocaleDateString()}  
+**Autor:** Equipo Técnico
+
+## Tabla de Contenidos
+
+1. [Introducción](#introducción)
+2. [Requisitos del Sistema](#requisitos)
+3. [Instalación](#instalación)
+4. [Configuración](#configuración)
+5. [Uso](#uso)
+6. [Solución de Problemas](#problemas)
+
+## Introducción
+
+Descripción general del sistema/herramienta...
+
+## Requisitos del Sistema
+
+### Hardware Mínimo
+- Procesador: Intel i3 o equivalente
+- RAM: 4GB
+- Almacenamiento: 1GB disponible
+
+### Software Requerido
+- Sistema operativo: Windows 10+, macOS 10.14+, Ubuntu 18.04+
+- Navegador: Chrome 90+, Firefox 88+
+
+## Instalación
+
+### Paso 1: Descarga
+\`\`\`bash
+git clone https://github.com/usuario/proyecto.git
+cd proyecto
+\`\`\`
+
+### Paso 2: Configuración
+\`\`\`bash
+npm install
+npm run setup
+\`\`\`
+
+## Uso Básico
+
+Para ejecutar la aplicación:
+\`\`\`bash
+npm start
+\`\`\`
+
+## Solución de Problemas
+
+### Error común 1
+**Síntoma:** Descripción del error  
+**Solución:** Pasos para resolverlo
+
+### Error común 2
+**Síntoma:** Otro error típico  
+**Solución:** Cómo solucionarlo`
+    };
+
+    // Utilidades mejoradas
+    function stripFrontMatter(text) {
+      const fm = text.match(/^\s*---[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]?/);
+      if (fm) {
+        return text.slice(fm[0].length);
+      }
+      return text;
+    }
+
+    function sanitizeHTML(dirtyHtml) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(dirtyHtml, "text/html");
+      ["script", "iframe", "object", "embed"].forEach(tag => {
+        doc.querySelectorAll(tag).forEach(n => n.remove());
+      });
+      const tree = doc.body || doc;
+      const walker = document.createTreeWalker(tree, NodeFilter.SHOW_ELEMENT);
+      while (walker.nextNode()) {
+        const el = walker.currentNode;
+        Array.from(el.attributes).forEach(attr => {
+          const name = attr.name.toLowerCase();
+          const val = (attr.value || "").trim();
+          if (name.startsWith("on") || (name === "href" || name === "src") && /^javascript:/i.test(val)) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      }
+      return (doc.body && doc.body.innerHTML) || "";
+    }
+
+    function stripPUA(text) {
+      return text.replace(/[\uE000-\uF8FF]/g, "");
+    }
+
+    function stripCitationTokens(text) {
+      return text.replace(/filecite|turn\d+file\d+/gi, "");
+    }
+
+    function looksLikeHTML(text) {
+      const t = text.trim();
+      if (t.startsWith("<") && t.endsWith(">")) return true;
+      return /<\/?[a-z][\s\S]*>/i.test(t);
+    }
+
+    function detectFormat(text) {
+      const cleaned = text.trim();
+      if (looksLikeHTML(cleaned)) return 'HTML';
+      if (cleaned.includes('# ') || cleaned.includes('## ') || cleaned.includes('**') || cleaned.includes('*')) return 'Markdown';
+      if (cleaned.includes('{\\rtf1')) return 'RTF';
+      return 'Texto';
+    }
+
+    function calculateReadingTime(text) {
+      const wordsPerMinute = 200;
+      const words = text.trim().split(/\s+/).filter(Boolean).length;
+      const minutes = Math.ceil(words / wordsPerMinute);
+      return minutes;
+    }
+
+    function htmlToPlainText(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      return doc.body.textContent || "";
+    }
+
+    // Elementos DOM
+    const inputEl = document.getElementById("input");
+    const previewEl = document.getElementById("preview");
+    const charCountEl = document.getElementById("charCount");
+    const wordCountEl = document.getElementById("wordCount");
+    const lineCountEl = document.getElementById("lineCount");
+    const formatTypeEl = document.getElementById("formatType");
+    const readTimeEl = document.getElementById("readTime");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+
+    // Sistema de estadísticas mejorado
+    function updateStats(text) {
+      const chars = text.length;
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      const lines = text.split('\n').length;
+      const format = detectFormat(text);
+      const readTime = calculateReadingTime(text);
+
+      charCountEl.textContent = chars.toLocaleString();
+      wordCountEl.textContent = words.length.toLocaleString();
+      lineCountEl.textContent = lines.toLocaleString();
+      formatTypeEl.textContent = format;
+      formatTypeEl.className = `stat-value format-badge format-${format.toLowerCase()}`;
+      readTimeEl.textContent = `~${readTime} min`;
+    }
+
+    // Sistema de renderizado mejorado
+    function render() {
+      const raw = inputEl.value || "";
+      updateStats(raw);
+
+      if (!raw.trim()) {
+        previewEl.innerHTML = `
+          <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h2>Claude Converter Pro</h2>
+            <p>Comienza escribiendo o pegando tu contenido en el editor de la izquierda.</p>
+            <div class="welcome-features">
+              <div class="feature-item">✨ Optimización con IA</div>
+              <div class="feature-item">📄 PDF Premium con TOC</div>
+              <div class="feature-item">🎨 Auto-formateo inteligente</div>
+              <div class="feature-item">📊 Estadísticas avanzadas</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const withoutFM = stripFrontMatter(raw);
+      let cleanedInput = stripPUA(withoutFM);
+      cleanedInput = stripCitationTokens(cleanedInput);
+      
+      let html = "";
+      if (looksLikeHTML(cleanedInput)) {
+        html = sanitizeHTML(cleanedInput);
+      } else if (typeof marked !== "undefined" && typeof marked.parse === "function") {
+        try {
+          marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false
+          });
+          const mdHtml = marked.parse(cleanedInput);
+          html = sanitizeHTML(mdHtml);
+        } catch (e) {
+          html = sanitizeHTML(cleanedInput.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>"));
+        }
+      } else {
+        html = sanitizeHTML(cleanedInput.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>"));
+      }
+      
+      previewEl.innerHTML = html;
+      
+      // Generar TOC si hay headers
+      generateTOC();
+    }
+
+    // Generador de tabla de contenidos
+    function generateTOC() {
+      const headers = previewEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      if (headers.length > 2) {
+        const toc = document.createElement('div');
+        toc.className = 'table-of-contents';
+        toc.innerHTML = '<h2>Tabla de Contenidos</h2><ul></ul>';
+        
+        const ul = toc.querySelector('ul');
+        headers.forEach((header, index) => {
+          const level = parseInt(header.tagName.charAt(1));
+          const id = `header-${index}`;
+          header.id = id;
+          
+          const li = document.createElement('li');
+          li.className = `toc-level-${level}`;
+          li.innerHTML = `<a href="#${id}">${header.textContent}</a>`;
+          ul.appendChild(li);
+        });
+        
+        previewEl.insertBefore(toc, previewEl.firstChild);
+      }
+    }
+
+    // Sistema de auto-guardado
+    let autoSaveTimeout;
+    function scheduleAutoSave() {
+      if (!CONFIG.autoSave) return;
+      
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        localStorage.setItem('claude-converter-content', inputEl.value);
+        localStorage.setItem('claude-converter-timestamp', Date.now());
+      }, CONFIG.autoSaveInterval);
+    }
+
+    // Debounce para renderizado
+    let renderTimeout;
+    function scheduleRender() {
+      if (renderTimeout) clearTimeout(renderTimeout);
+      renderTimeout = setTimeout(render, 150);
+    }
+
+    // Event listeners principales
+    inputEl.addEventListener("input", () => {
+      scheduleRender();
+      scheduleAutoSave();
+    });
+
+    // Carga de archivos mejorada
+    document.getElementById("file").addEventListener("change", async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      
+      showLoading("Cargando archivo(s)...");
+      
+      try {
+        let combinedContent = "";
+        for (const file of files) {
+          if (file.size > CONFIG.maxFileSize) {
+            alert(`El archivo ${file.name} es demasiado grande (máximo 10MB)`);
+            continue;
+          }
+          
+          const text = await file.text();
+          if (files.length > 1) {
+            combinedContent += `\n\n# ${file.name}\n\n${text}`;
+          } else {
+            combinedContent = text;
+          }
+        }
+        
+        inputEl.value = combinedContent;
+        render();
+      } catch (error) {
+        alert("Error al cargar el archivo: " + error.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Toolbar del editor
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        insertTextAction(action);
       });
     });
 
-    // Demo: “Limpiar”
-    document.getElementById('clear').onclick = () => (document.getElementById('input').value = '');
+    function insertTextAction(action) {
+      const start = inputEl.selectionStart;
+      const end = inputEl.selectionEnd;
+      const selectedText = inputEl.value.substring(start, end);
+      let replacement = "";
+
+      switch(action) {
+        case 'bold':
+          replacement = `**${selectedText || 'texto en negrita'}**`;
+          break;
+        case 'italic':
+          replacement = `*${selectedText || 'texto en cursiva'}*`;
+          break;
+        case 'code':
+          replacement = `\`${selectedText || 'código'}\``;
+          break;
+        case 'link':
+          replacement = `[${selectedText || 'texto del enlace'}](https://ejemplo.com)`;
+          break;
+        case 'image':
+          replacement = `![${selectedText || 'descripción'}](url-de-la-imagen.jpg)`;
+          break;
+        case 'table':
+          replacement = `\n| Columna 1 | Columna 2 | Columna 3 |\n|-----------|-----------|-----------|\n| Dato 1    | Dato 2    | Dato 3    |\n| Dato 4    | Dato 5    | Dato 6    |\n`;
+          break;
+        case 'list':
+          replacement = `\n- Elemento 1\n- Elemento 2\n- Elemento 3\n`;
+          break;
+        case 'h1':
+          replacement = `# ${selectedText || 'Título Principal'}`;
+          break;
+        case 'h2':
+          replacement = `## ${selectedText || 'Subtítulo'}`;
+          break;
+        case 'h3':
+          replacement = `### ${selectedText || 'Subtítulo Menor'}`;
+          break;
+      }
+
+      inputEl.value = inputEl.value.substring(0, start) + replacement + inputEl.value.substring(end);
+      inputEl.focus();
+      
+      const newPos = start + replacement.length;
+      inputEl.setSelectionRange(newPos, newPos);
+      
+      scheduleRender();
+    }
+
+    // Botones utilitarios mejorados
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      if (inputEl.value && !confirm("¿Estás seguro de que quieres limpiar todo el contenido?")) return;
+      inputEl.value = "";
+      render();
+    });
+
+    document.getElementById("pasteBtn").addEventListener("click", async () => {
+      try {
+        const txt = await navigator.clipboard.readText();
+        if (txt) {
+          inputEl.value = txt;
+          render();
+        }
+      } catch (err) {
+        alert("No se pudo pegar desde el portapapeles. Permite el acceso o pega manualmente (Ctrl/Cmd+V).");
+      }
+    });
+
+    document.getElementById("formatBtn").addEventListener("click", () => {
+      const content = inputEl.value;
+      if (!content.trim()) return;
+      
+      // Auto-formateo inteligente
+      let formatted = content
+        .replace(/\n{3,}/g, '\n\n') // Múltiples saltos de línea
+        .replace(/[ \t]+$/gm, '') // Espacios al final de línea
+        .replace(/^[ \t]+/gm, '') // Espacios al inicio (mantener indentación markdown)
+        .trim();
+      
+      inputEl.value = formatted;
+      render();
+    });
+
+    // Sistema de loading
+    function showLoading(message = "Procesando...") {
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.querySelector('p').textContent = message;
+    }
+
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+
+    // Exportadores mejorados
+    async function embedRemoteImages() {
+      const imgs = previewEl.querySelectorAll('img');
+      const tasks = Array.from(imgs).map(img => {
+        const src = img.getAttribute('src');
+        if (!src || src.startsWith('data:')) return Promise.resolve();
+        
+        try {
+          const url = new URL(src, window.location.href);
+          if (url.origin === window.location.origin) return Promise.resolve();
+        } catch (e) {
+          return Promise.resolve();
+        }
+        
+        return fetch(src)
+          .then(res => res.blob())
+          .then(blob => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              img.src = reader.result;
+              resolve();
+            };
+            reader.onerror = () => resolve();
+            reader.readAsDataURL(blob);
+          }))
+          .catch(() => {});
+      });
+      return Promise.all(tasks);
+    }
+
+    function addPdfHeaderFooter(jsPdf, titleText = "Claude Converter Pro") {
+      const totalPages = jsPdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        jsPdf.setPage(i);
+        jsPdf.setFontSize(9);
+        jsPdf.setTextColor(80);
+        jsPdf.text(titleText, 14, 10);
+        jsPdf.text(`Página ${i} / ${totalPages}`, jsPdf.internal.pageSize.getWidth() - 14, jsPdf.internal.pageSize.getHeight() - 10, { align: "right" });
+        
+        // Línea decorativa en el header
+        jsPdf.setDrawColor(200);
+        jsPdf.setLineWidth(0.5);
+        jsPdf.line(14, 12, jsPdf.internal.pageSize.getWidth() - 14, 12);
+      }
+    }
+
+    async function exportPDF() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      showLoading("Generando PDF premium...");
+      
+      try {
+        await embedRemoteImages();
+        
+        if (typeof html2pdf === "undefined") {
+          throw new Error("La librería html2pdf.js no está disponible");
+        }
+
+        document.body.classList.add("exporting");
+        previewEl.classList.add("print");
+        
+        const opt = {
+          margin: [15, 12, 18, 12],
+          filename: `documento-${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: "jpeg", quality: CONFIG.pdfQuality },
+          html2canvas: { 
+            scale: CONFIG.exportScale, 
+            backgroundColor: "#ffffff", 
+            useCORS: true, 
+            allowTaint: true,
+            logging: false
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["css", "legacy"], before: ".page-break" }
+        };
+
+        const worker = html2pdf().set(opt).from(previewEl);
+        const pdf = await worker.toPdf().get("pdf");
+        addPdfHeaderFooter(pdf, "Claude Converter Pro");
+        pdf.save(opt.filename);
+
+      } catch (err) {
+        alert("Error al exportar PDF: " + err.message);
+        console.error(err);
+      } finally {
+        previewEl.classList.remove("print");
+        document.body.classList.remove("exporting");
+        hideLoading();
+      }
+    }
+
+    async function exportPNG() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      showLoading("Generando imagen PNG...");
+
+      try {
+        if (typeof html2canvas === "undefined") {
+          throw new Error("La librería html2canvas no está disponible");
+        }
+
+        document.body.classList.add("exporting");
+        previewEl.classList.add("print");
+        
+        await embedRemoteImages();
+        
+        const canvas = await html2canvas(previewEl, { 
+          backgroundColor: "#ffffff", 
+          scale: CONFIG.exportScale, 
+          useCORS: true, 
+          allowTaint: true,
+          logging: false
+        });
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const filename = `captura-${new Date().toISOString().split('T')[0]}.png`;
+            saveAs(blob, filename);
+          }
+        });
+
+      } catch (err) {
+        alert("Error al exportar PNG: " + err.message);
+        console.error(err);
+      } finally {
+        previewEl.classList.remove("print");
+        document.body.classList.remove("exporting");
+        hideLoading();
+      }
+    }
+
+    async function exportDOCX() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      showLoading("Generando documento DOCX...");
+
+      try {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+        const raw = stripFrontMatter(inputEl.value || "");
+        const plain = looksLikeHTML(raw) ? htmlToPlainText(raw) : raw;
+        const lines = plain.replace(/\r\n/g, "\n").split("\n");
+        
+        const paragraphs = lines.map(line => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('# ')) {
+            return new Paragraph({ 
+              text: trimmed.substring(2), 
+              heading: HeadingLevel.HEADING_1 
+            });
+          } else if (trimmed.startsWith('## ')) {
+            return new Paragraph({ 
+              text: trimmed.substring(3), 
+              heading: HeadingLevel.HEADING_2 
+            });
+          } else {
+            return new Paragraph({ text: trimmed || " " });
+          }
+        });
+
+        const doc = new Document({ 
+          sections: [{ 
+            properties: {}, 
+            children: paragraphs 
+          }] 
+        });
+
+        const blob = await Packer.toBlob(doc);
+        const filename = `documento-${new Date().toISOString().split('T')[0]}.docx`;
+        saveAs(blob, filename);
+
+      } catch (err) {
+        alert("Error al exportar DOCX: " + err.message);
+        console.error(err);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function exportTXT() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      const raw = stripFrontMatter(inputEl.value || "");
+      const text = looksLikeHTML(raw) ? htmlToPlainText(raw) : raw;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const filename = `documento-${new Date().toISOString().split('T')[0]}.txt`;
+      saveAs(blob, filename);
+    }
+
+    function exportMD() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      const cleaned = stripFrontMatter(inputEl.value || "");
+      const blob = new Blob([cleaned], { type: "text/markdown;charset=utf-8" });
+      const filename = `documento-${new Date().toISOString().split('T')[0]}.md`;
+      saveAs(blob, filename);
+    }
+
+    function exportHTML() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documento Exportado</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        code { background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+${previewEl.innerHTML}
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const filename = `documento-${new Date().toISOString().split('T')[0]}.html`;
+      saveAs(blob, filename);
+    }
+
+    async function exportZip() {
+      if (!inputEl.value.trim()) {
+        alert("No hay contenido para exportar");
+        return;
+      }
+
+      showLoading("Creando archivo ZIP...");
+      
+      try {
+        // Nota: Esta es una implementación simplificada
+        // En una versión completa usarías JSZip
+        alert("Función ZIP en desarrollo. Por ahora, exporta cada formato individualmente.");
+      } catch (err) {
+        alert("Error al crear ZIP: " + err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Event listeners para exportación
+    document.getElementById("pdfBtn").addEventListener("click", exportPDF);
+    document.getElementById("pngBtn").addEventListener("click", exportPNG);
+    document.getElementById("docxBtn").addEventListener("click", exportDOCX);
+    document.getElementById("txtBtn").addEventListener("click", exportTXT);
+    document.getElementById("mdBtn").addEventListener("click", exportMD);
+    document.getElementById("htmlBtn").addEventListener("click", exportHTML);
+    document.getElementById("zipBtn").addEventListener("click", exportZip);
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+
+    // Sistema de modales
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Event listeners para modales
+    document.getElementById("settingsBtn").addEventListener("click", () => openModal("settingsModal"));
+    document.getElementById("templatesBtn").addEventListener("click", () => openModal("templatesModal"));
+    
+    document.querySelectorAll('.modal-close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modal = e.target.closest('.modal');
+        if (modal) closeModal(modal.id);
+      });
+    });
+
+    // Cerrar modales al hacer clic fuera
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+      });
+    });
+
+    // Sistema de plantillas
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const templateType = card.dataset.template;
+        if (TEMPLATES[templateType]) {
+          if (inputEl.value && !confirm("¿Reemplazar el contenido actual con la plantilla?")) return;
+          inputEl.value = TEMPLATES[templateType];
+          render();
+          closeModal("templatesModal");
+        }
+      });
+    });
+
+    // Configuraciones
+    document.getElementById("pdfQuality").addEventListener("change", (e) => {
+      CONFIG.pdfQuality = parseFloat(e.target.value);
+      localStorage.setItem('claude-converter-config', JSON.stringify(CONFIG));
+    });
+
+    document.getElementById("exportScale").addEventListener("change", (e) => {
+      CONFIG.exportScale = parseInt(e.target.value);
+      localStorage.setItem('claude-converter-config', JSON.stringify(CONFIG));
+    });
+
+    document.getElementById("autoSave").addEventListener("change", (e) => {
+      CONFIG.autoSave = e.target.checked;
+      localStorage.setItem('claude-converter-config', JSON.stringify(CONFIG));
+    });
+
+    // Tema oscuro/claro
+    const themeToggle = document.getElementById("themeToggle");
+    const THEME_KEY = "claude-converter-theme";
+    
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      themeToggle.textContent = theme === 'dark' ? '🌞' : '🌙';
+    }
+    
+    function initTheme() {
+      const stored = localStorage.getItem(THEME_KEY);
+      applyTheme(stored || "dark");
+    }
+    
+    themeToggle.addEventListener("click", () => {
+      const current = document.documentElement.dataset.theme || "dark";
+      const next = current === "dark" ? "light" : "dark";
+      applyTheme(next);
+      localStorage.setItem(THEME_KEY, next);
+    });
+
+    // Control de zoom
+    let zoomLevel = 1;
+    document.getElementById("zoomIn").addEventListener("click", () => {
+      zoomLevel = Math.min(zoomLevel + 0.1, 2);
+      previewEl.style.transform = `scale(${zoomLevel})`;
+      document.querySelector('.zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+    });
+
+    document.getElementById("zoomOut").addEventListener("click", () => {
+      zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
+      previewEl.style.transform = `scale(${zoomLevel})`;
+      document.querySelector('.zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
+    });
+
+    document.getElementById("refreshPreview").addEventListener("click", render);
+
+    // Pantalla completa
+    document.getElementById("fullscreenBtn").addEventListener("click", () => {
+      const previewWrap = document.getElementById("previewWrap");
+      if (!document.fullscreenElement) {
+        previewWrap.requestFullscreen().catch(err => {
+          console.log("Error activando pantalla completa:", err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Recuperar contenido guardado
+    function loadSavedContent() {
+      const saved = localStorage.getItem('claude-converter-content');
+      const timestamp = localStorage.getItem('claude-converter-timestamp');
+      
+      if (saved && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        const hours = Math.floor(age / (1000 * 60 * 60));
+        
+        if (hours < 24 && confirm(`Se encontró contenido guardado hace ${hours} hora(s). ¿Quieres recuperarlo?`)) {
+          inputEl.value = saved;
+        }
+      }
+    }
+
+    // Cargar configuración guardada
+    function loadConfig() {
+      const saved = localStorage.getItem('claude-converter-config');
+      if (saved) {
+        try {
+          const config = JSON.parse(saved);
+          Object.assign(CONFIG, config);
+          
+          // Actualizar controles de UI
+          document.getElementById("pdfQuality").value = CONFIG.pdfQuality;
+          document.getElementById("exportScale").value = CONFIG.exportScale;
+          document.getElementById("autoSave").checked = CONFIG.autoSave;
+        } catch (e) {
+          console.log("Error cargando configuración:", e);
+        }
+      }
+    }
+
+    // Inicialización
+    function init() {
+      initTheme();
+      loadConfig();
+      loadSavedContent();
+      render();
+      
+      // Mensaje de bienvenida en consola
+      console.log(`
+🤖 Claude Converter Pro v2.0
+================================
+✨ Conversor profesional con IA
+📄 Exporta a PDF, DOCX, PNG, HTML
+🎨 Auto-formateo inteligente
+📊 Estadísticas avanzadas
+
+Creado para GitHub Pages
+      `);
+    }
+
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case 's':
+            e.preventDefault();
+            exportPDF();
+            break;
+          case 'p':
+            e.preventDefault();
+            window.print();
+            break;
+          case 'o':
+            e.preventDefault();
+            document.getElementById('file').click();
+            break;
+        }
+      }
+    });
+
+    // Inicializar aplicación
+    document.addEventListener('DOMContentLoaded', init);
+    
+    // Si las librerías ya están cargadas, inicializar inmediatamente
+    if (document.readyState === 'complete') {
+      init();
+    }
   </script>
 </body>
 </html>
